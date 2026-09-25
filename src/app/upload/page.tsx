@@ -16,6 +16,8 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   LayoutGrid,
   Maximize2,
   Search
@@ -25,6 +27,8 @@ import { getTemplates, saveProject, saveTemplate } from "@/lib/db";
 import { BatchProcessor } from "@/lib/queue";
 import { downloadZip } from "@/lib/zip";
 import Link from "next/link";
+
+const PAGE_SIZE = 20;
 
 // Memoized Thumbnail for filmstrip to prevent parent re-render loops
 const FilmstripThumbnail = memo(function FilmstripThumbnail({
@@ -54,33 +58,44 @@ const FilmstripThumbnail = memo(function FilmstripThumbnail({
       onClick={onClick}
       style={{ 
         position: "relative",
-        width: "70px", 
-        height: "65px", 
-        borderRadius: "6px", 
+        width: "74px", 
+        height: "68px", 
+        borderRadius: "8px", 
         overflow: "hidden", 
         cursor: "pointer", 
         flexShrink: 0,
         border: `2px solid ${isSelected ? "var(--accent)" : "transparent"}`,
         background: "#080c14",
-        boxShadow: isSelected ? "0 0 10px rgba(59, 130, 246, 0.6)" : "none",
-        opacity: isSelected ? 1 : 0.6,
+        boxShadow: isSelected ? "0 0 12px rgba(59, 130, 246, 0.7)" : "none",
+        opacity: isSelected ? 1 : 0.65,
+        transform: isSelected ? "scale(1.05)" : "scale(1)",
         transition: "all 0.15s ease"
       }}
-      title={`Photo ${index + 1}`}
+      title={`Photo #${index + 1}`}
     >
       {url && <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
       {/* Mini footer preview overlay */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "14px", background: "rgba(11, 21, 40, 0.9)" }}>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "14px", background: "rgba(11, 21, 40, 0.95)" }}>
         <img src={footerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
-      <span style={{ position: "absolute", top: "2px", left: "4px", fontSize: "0.65rem", fontWeight: 700, color: "#fff", textShadow: "0 1px 2px #000" }}>
-        {index + 1}
+      <span style={{ 
+        position: "absolute", 
+        top: "2px", 
+        left: "3px", 
+        fontSize: "0.65rem", 
+        fontWeight: 700, 
+        color: "#fff", 
+        background: "rgba(0,0,0,0.7)",
+        padding: "1px 4px",
+        borderRadius: "3px"
+      }}>
+        #{index + 1}
       </span>
     </div>
   );
 });
 
-// Memoized Grid Photo Card
+// Memoized Grid Photo Card for 20-photo page view
 const GridPhotoCard = memo(function GridPhotoCard({
   job,
   index,
@@ -107,23 +122,25 @@ const GridPhotoCard = memo(function GridPhotoCard({
       style={{ 
         position: "relative", 
         background: "#080c14", 
-        borderRadius: "8px", 
+        borderRadius: "10px", 
         overflow: "hidden", 
         border: "1px solid var(--border)",
         cursor: "pointer",
-        transition: "transform 0.15s, border-color 0.15s",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+        transition: "transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "scale(1.03)";
+        e.currentTarget.style.transform = "translateY(-3px)";
         e.currentTarget.style.borderColor = "var(--accent)";
+        e.currentTarget.style.boxShadow = "0 8px 20px rgba(59, 130, 246, 0.25)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
       }}
     >
-      <div style={{ height: "140px", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ height: "160px", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {url ? (
           <img src={url} alt={job.originalName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
@@ -137,21 +154,22 @@ const GridPhotoCard = memo(function GridPhotoCard({
 
         <span style={{ 
           position: "absolute", 
-          top: "6px", 
-          left: "6px", 
-          background: "rgba(0,0,0,0.75)", 
+          top: "8px", 
+          left: "8px", 
+          background: "rgba(0,0,0,0.8)", 
           color: "#fff", 
-          fontSize: "0.7rem", 
+          fontSize: "0.75rem", 
           fontWeight: 700, 
-          padding: "2px 6px", 
-          borderRadius: "4px" 
+          padding: "2px 8px", 
+          borderRadius: "4px",
+          border: "1px solid rgba(255,255,255,0.1)"
         }}>
           #{index + 1}
         </span>
       </div>
 
-      <div style={{ padding: "8px 10px", background: "rgba(17, 24, 39, 0.95)" }}>
-        <p style={{ fontSize: "0.78rem", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <div style={{ padding: "10px 12px", background: "rgba(17, 24, 39, 0.95)" }}>
+        <p style={{ fontSize: "0.8rem", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {job.originalName}
         </p>
       </div>
@@ -169,6 +187,7 @@ export default function Workspace() {
   // Interactive Preview State
   const [previewMode, setPreviewMode] = useState<"single" | "grid">("single");
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
+  const [gridPage, setGridPage] = useState(1);
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [gridSearch, setGridSearch] = useState("");
@@ -217,6 +236,7 @@ export default function Workspace() {
     }
     setJobs(prev => [...prev, ...newJobs]);
     setCurrentPreviewIndex(0);
+    setGridPage(1);
     setStep(2);
   };
 
@@ -266,7 +286,7 @@ export default function Workspace() {
     }
   }, [currentPreviewIndex, jobs]);
 
-  // Safe Next & Previous Navigation handlers
+  // Safe Next & Previous Single Photo Navigation
   const handlePrev = useCallback(() => {
     const count = jobsCountRef.current;
     if (count === 0) return;
@@ -279,24 +299,58 @@ export default function Workspace() {
     setCurrentPreviewIndex(prev => (prev < count - 1 ? prev + 1 : 0));
   }, []);
 
-  // Keyboard navigation (Left Arrow ← and Right Arrow →)
+  // Safe Next & Previous Batch (Jump 20 photos)
+  const handlePrevBatch = useCallback(() => {
+    const count = jobsCountRef.current;
+    if (count === 0) return;
+    setCurrentPreviewIndex(prev => {
+      const currentBatchStart = Math.floor(prev / PAGE_SIZE) * PAGE_SIZE;
+      const prevBatchStart = currentBatchStart - PAGE_SIZE;
+      return prevBatchStart >= 0 ? prevBatchStart : Math.floor((count - 1) / PAGE_SIZE) * PAGE_SIZE;
+    });
+  }, []);
+
+  const handleNextBatch = useCallback(() => {
+    const count = jobsCountRef.current;
+    if (count === 0) return;
+    setCurrentPreviewIndex(prev => {
+      const currentBatchStart = Math.floor(prev / PAGE_SIZE) * PAGE_SIZE;
+      const nextBatchStart = currentBatchStart + PAGE_SIZE;
+      return nextBatchStart < count ? nextBatchStart : 0;
+    });
+  }, []);
+
+  // Keyboard navigation
   useEffect(() => {
     if (step !== 3 || previewMode !== "single") return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "ArrowLeft") {
+      
+      if (e.shiftKey && e.key === "ArrowLeft") {
+        e.preventDefault();
+        handlePrevBatch();
+      } else if (e.shiftKey && (e.key === "ArrowRight" || e.key === " ")) {
+        e.preventDefault();
+        handleNextBatch();
+      } else if (e.key === "ArrowLeft") {
         e.preventDefault();
         handlePrev();
       } else if (e.key === "ArrowRight" || e.key === " ") {
         e.preventDefault();
         handleNext();
+      } else if (e.key === "PageUp") {
+        e.preventDefault();
+        handlePrevBatch();
+      } else if (e.key === "PageDown") {
+        e.preventDefault();
+        handleNextBatch();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [step, previewMode, handlePrev, handleNext]);
+  }, [step, previewMode, handlePrev, handleNext, handlePrevBatch, handleNextBatch]);
 
   // Auto-play slideshow effect
   useEffect(() => {
@@ -308,16 +362,6 @@ export default function Workspace() {
 
     return () => clearInterval(interval);
   }, [isPlaying, step, previewMode, handleNext]);
-
-  // Scroll active thumbnail into view in filmstrip
-  useEffect(() => {
-    if (filmstripRef.current && previewMode === "single") {
-      const activeEl = filmstripRef.current.children[currentPreviewIndex] as HTMLElement;
-      if (activeEl) {
-        activeEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-      }
-    }
-  }, [currentPreviewIndex, previewMode]);
 
   const startProcessing = async () => {
     if (!selectedTemplate) return alert("Please select or upload a footer template.");
@@ -372,14 +416,28 @@ export default function Workspace() {
     }
   };
 
+  // Calculations for 20-photo batches
   const filteredJobs = gridSearch.trim()
     ? jobs.filter((j, i) => j.originalName.toLowerCase().includes(gridSearch.toLowerCase()) || `photo ${i + 1}`.includes(gridSearch.toLowerCase()))
     : jobs;
 
+  const totalGridPages = Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE));
+  const validGridPage = Math.min(Math.max(1, gridPage), totalGridPages);
+  const gridStartIndex = (validGridPage - 1) * PAGE_SIZE;
+  const gridEndIndex = Math.min(gridStartIndex + PAGE_SIZE, filteredJobs.length);
+  const current20GridJobs = filteredJobs.slice(gridStartIndex, gridEndIndex);
+
+  // Single View 20-photo Batch
+  const singleBatchPage = Math.floor(currentPreviewIndex / PAGE_SIZE) + 1;
+  const totalSingleBatches = Math.max(1, Math.ceil(jobs.length / PAGE_SIZE));
+  const singleBatchStart = (singleBatchPage - 1) * PAGE_SIZE;
+  const singleBatchEnd = Math.min(singleBatchStart + PAGE_SIZE, jobs.length);
+  const current20FilmstripJobs = jobs.slice(singleBatchStart, singleBatchEnd);
+
   const currentJob = jobs[currentPreviewIndex];
 
   return (
-    <div style={{ maxWidth: "1280px", margin: "0 auto", paddingBottom: "60px" }}>
+    <div style={{ maxWidth: "1300px", margin: "0 auto", paddingBottom: "60px" }}>
       {/* Header & Steps Nav */}
       <div className="header-flex" style={{ flexWrap: "wrap", gap: "16px" }}>
         <div>
@@ -570,7 +628,7 @@ export default function Workspace() {
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px" }}>
               <button className="btn btn-secondary" onClick={() => setStep(1)}>Back to Upload</button>
               <button className="btn" disabled={!selectedTemplate} onClick={() => setStep(3)}>
-                Next: Interactive Preview & Settings
+                Next: 20-Photo Preview & Settings
               </button>
             </div>
           </div>
@@ -631,7 +689,7 @@ export default function Workspace() {
         </div>
       )}
 
-      {/* STEP 3: Interactive Live Preview & Settings */}
+      {/* STEP 3: 20-Photo Paginated Interactive Preview & Settings */}
       {step === 3 && selectedTemplate && (
         <div style={{ display: "grid", gridTemplateColumns: previewMode === "single" ? "1.4fr 0.6fr" : "1fr", gap: "24px", marginTop: "20px" }}>
           
@@ -663,7 +721,11 @@ export default function Workspace() {
                   </button>
                   <button 
                     type="button"
-                    onClick={() => { setPreviewMode("grid"); setIsPlaying(false); }}
+                    onClick={() => { 
+                      setPreviewMode("grid"); 
+                      setIsPlaying(false); 
+                      setGridPage(Math.floor(currentPreviewIndex / PAGE_SIZE) + 1);
+                    }}
                     style={{
                       padding: "6px 14px",
                       fontSize: "0.85rem",
@@ -678,13 +740,13 @@ export default function Workspace() {
                       gap: "6px"
                     }}
                   >
-                    <LayoutGrid size={16} /> All Photos Grid ({jobs.length})
+                    <LayoutGrid size={16} /> 20 Photos Grid View ({jobs.length})
                   </button>
                 </div>
 
                 {previewMode === "single" && (
                   <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: "6px" }}>
-                    Keyboard: <strong>←</strong> / <strong>→</strong> keys
+                    Flip: <strong>←</strong> / <strong>→</strong> | Jump 20: <strong>Shift+←/→</strong>
                   </span>
                 )}
               </div>
@@ -703,19 +765,20 @@ export default function Workspace() {
                     <span>{isPlaying ? "Pause" : "Auto Slideshow"}</span>
                   </button>
 
+                  {/* Single Photo Step Controls */}
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: "8px", border: "1px solid var(--border)" }}>
                     <button 
                       type="button"
                       onClick={handlePrev}
                       className="btn btn-secondary"
                       style={{ padding: "6px 10px", border: "none" }}
-                      title="Previous Photo (Left Arrow)"
+                      title="Previous Photo (← Left Arrow)"
                     >
                       <ChevronLeft size={18} />
                     </button>
                     
-                    <span style={{ fontSize: "0.85rem", fontWeight: 600, minWidth: "90px", textAlign: "center" }}>
-                      {currentPreviewIndex + 1} / {jobs.length}
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700, minWidth: "90px", textAlign: "center" }}>
+                      #{currentPreviewIndex + 1} / {jobs.length}
                     </span>
 
                     <button 
@@ -723,7 +786,7 @@ export default function Workspace() {
                       onClick={handleNext}
                       className="btn btn-secondary"
                       style={{ padding: "6px 10px", border: "none" }}
-                      title="Next Photo (Right Arrow)"
+                      title="Next Photo (→ Right Arrow)"
                     >
                       <ChevronRight size={18} />
                     </button>
@@ -736,7 +799,7 @@ export default function Workspace() {
                     type="text" 
                     placeholder="Search photos..." 
                     value={gridSearch}
-                    onChange={(e) => setGridSearch(e.target.value)}
+                    onChange={(e) => { setGridSearch(e.target.value); setGridPage(1); }}
                     className="form-control"
                     style={{ paddingLeft: "32px", fontSize: "0.8rem", padding: "6px 10px 6px 30px" }}
                   />
@@ -782,7 +845,7 @@ export default function Workspace() {
                       boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
                       transition: "all 0.15s ease"
                     }}
-                    title="Previous (← Left Arrow)"
+                    title="Previous Photo (← Left Arrow)"
                   >
                     <ChevronLeft size={24} />
                   </button>
@@ -846,7 +909,7 @@ export default function Workspace() {
                       boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
                       transition: "all 0.15s ease"
                     }}
-                    title="Next (→ Right Arrow)"
+                    title="Next Photo (→ Right Arrow)"
                   >
                     <ChevronRight size={24} />
                   </button>
@@ -855,16 +918,16 @@ export default function Workspace() {
                 {/* Current Photo Details & Fast Scrub Slider */}
                 <div style={{ marginTop: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
                   <div>
-                    <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>
-                      Photo {currentPreviewIndex + 1} of {jobs.length}:
+                    <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--accent)" }}>
+                      Photo #{currentPreviewIndex + 1}
                     </span>
                     <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginLeft: "6px" }}>
-                      {currentJob?.originalName}
+                      ({currentJob?.originalName})
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", maxWidth: "300px" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>1</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", maxWidth: "320px" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>#1</span>
                     <input 
                       type="range" 
                       min="0" 
@@ -873,55 +936,120 @@ export default function Workspace() {
                       onChange={(e) => setCurrentPreviewIndex(Number(e.target.value))} 
                       style={{ width: "100%", accentColor: "var(--accent)" }}
                     />
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{jobs.length}</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>#{jobs.length}</span>
                   </div>
                 </div>
 
-                {/* Bottom Filmstrip Thumbnails Bar */}
+                {/* 20-Photos Filmstrip Header with 20-Photo Jump Controls */}
+                <div style={{ marginTop: "18px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(0,0,0,0.25)", padding: "8px 12px", borderRadius: "8px 8px 0 0", border: "1px solid var(--border)", borderBottom: "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                      Current 20-Photo Batch (Batch {singleBatchPage} of {totalSingleBatches}):
+                    </span>
+                    <span style={{ fontSize: "0.8rem", color: "#93c5fd", background: "rgba(59, 130, 246, 0.15)", padding: "2px 8px", borderRadius: "4px" }}>
+                      Photos #{singleBatchStart + 1} to #{singleBatchEnd}
+                    </span>
+                  </div>
+
+                  {totalSingleBatches > 1 && (
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button 
+                        type="button"
+                        onClick={handlePrevBatch}
+                        className="btn btn-secondary"
+                        style={{ padding: "4px 10px", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "4px" }}
+                        title="Previous 20 Photos (Shift + ←)"
+                      >
+                        <ChevronsLeft size={14} /> Prev 20
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={handleNextBatch}
+                        className="btn btn-secondary"
+                        style={{ padding: "4px 10px", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "4px" }}
+                        title="Next 20 Photos (Shift + →)"
+                      >
+                        Next 20 <ChevronsRight size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom 20-Photos Filmstrip Thumbnails Bar */}
                 <div 
                   ref={filmstripRef}
                   style={{ 
-                    marginTop: "16px", 
                     display: "flex", 
                     gap: "8px", 
                     overflowX: "auto", 
-                    padding: "8px 4px", 
-                    background: "rgba(0,0,0,0.3)", 
-                    borderRadius: "10px", 
+                    padding: "10px", 
+                    background: "rgba(0,0,0,0.35)", 
+                    borderRadius: "0 0 10px 10px", 
                     border: "1px solid var(--border)",
                     maxHeight: "95px"
                   }}
                 >
-                  {jobs.map((job, idx) => (
-                    <FilmstripThumbnail
-                      key={job.id}
-                      file={job.originalFile}
-                      index={idx}
-                      isSelected={idx === currentPreviewIndex}
-                      footerUrl={selectedTemplate.imageUrl}
-                      onClick={() => setCurrentPreviewIndex(idx)}
-                    />
-                  ))}
+                  {current20FilmstripJobs.map((job, idx) => {
+                    const actualIdx = singleBatchStart + idx;
+                    return (
+                      <FilmstripThumbnail
+                        key={job.id}
+                        file={job.originalFile}
+                        index={actualIdx}
+                        isSelected={actualIdx === currentPreviewIndex}
+                        footerUrl={selectedTemplate.imageUrl}
+                        onClick={() => setCurrentPreviewIndex(actualIdx)}
+                      />
+                    );
+                  })}
                 </div>
               </>
             )}
 
-            {/* ALL PHOTOS (GRID VIEW) MODE */}
+            {/* ALL PHOTOS (20 PER PAGE GRID VIEW) MODE */}
             {previewMode === "grid" && (
               <div style={{ marginTop: "8px" }}>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "16px" }}>
-                  Showing all <strong>{filteredJobs.length}</strong> photos with real-time footer overlay. Click any photo to inspect in Single View.
-                </p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                    Showing <strong>{gridStartIndex + 1} - {gridEndIndex}</strong> of <strong>{filteredJobs.length}</strong> photos (Page {validGridPage} of {totalGridPages}). Click any photo to flip in Single View.
+                  </p>
 
+                  {/* Top Pagination Bar */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <button 
+                      type="button"
+                      disabled={validGridPage <= 1}
+                      onClick={() => setGridPage(prev => Math.max(1, prev - 1))}
+                      className="btn btn-secondary"
+                      style={{ padding: "6px 12px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "4px" }}
+                    >
+                      <ChevronLeft size={16} /> Prev 20
+                    </button>
+                    
+                    <span style={{ fontSize: "0.85rem", fontWeight: 600, padding: "0 8px" }}>
+                      Page {validGridPage} / {totalGridPages}
+                    </span>
+
+                    <button 
+                      type="button"
+                      disabled={validGridPage >= totalGridPages}
+                      onClick={() => setGridPage(prev => Math.min(totalGridPages, prev + 1))}
+                      className="btn btn-secondary"
+                      style={{ padding: "6px 12px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "4px" }}
+                    >
+                      Next 20 <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 20-Photo Responsive Grid */}
                 <div style={{ 
                   display: "grid", 
-                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", 
-                  gap: "14px", 
-                  maxHeight: "560px", 
-                  overflowY: "auto", 
-                  paddingRight: "6px" 
+                  gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", 
+                  gap: "16px", 
+                  minHeight: "420px"
                 }}>
-                  {filteredJobs.map((job) => {
+                  {current20GridJobs.map((job) => {
                     const actualIdx = jobs.findIndex(j => j.id === job.id);
                     return (
                       <GridPhotoCard
@@ -936,6 +1064,93 @@ export default function Workspace() {
                       />
                     );
                   })}
+                </div>
+
+                {/* Bottom Full Pagination Bar */}
+                <div style={{ 
+                  marginTop: "24px", 
+                  padding: "16px", 
+                  background: "rgba(0,0,0,0.25)", 
+                  borderRadius: "10px", 
+                  border: "1px solid var(--border)",
+                  display: "flex", 
+                  justifyContent: "space-between", 
+                  alignItems: "center", 
+                  flexWrap: "wrap", 
+                  gap: "12px" 
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <button 
+                      type="button"
+                      disabled={validGridPage <= 1}
+                      onClick={() => setGridPage(1)}
+                      className="btn btn-secondary"
+                      style={{ padding: "6px 10px", fontSize: "0.8rem" }}
+                      title="First Page"
+                    >
+                      <ChevronsLeft size={16} />
+                    </button>
+                    <button 
+                      type="button"
+                      disabled={validGridPage <= 1}
+                      onClick={() => setGridPage(prev => Math.max(1, prev - 1))}
+                      className="btn btn-secondary"
+                      style={{ padding: "6px 14px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
+                    >
+                      <ChevronLeft size={16} /> Prev 20 Photos
+                    </button>
+                  </div>
+
+                  {/* Direct Page Selector Buttons */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    {Array.from({ length: Math.min(5, totalGridPages) }).map((_, i) => {
+                      let p = validGridPage <= 3 ? i + 1 : validGridPage >= totalGridPages - 2 ? totalGridPages - 4 + i : validGridPage - 2 + i;
+                      if (p < 1 || p > totalGridPages) return null;
+                      const isCurrent = p === validGridPage;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setGridPage(p)}
+                          style={{
+                            width: "34px",
+                            height: "34px",
+                            borderRadius: "6px",
+                            border: `1px solid ${isCurrent ? "var(--accent)" : "var(--border)"}`,
+                            background: isCurrent ? "var(--accent)" : "rgba(0,0,0,0.2)",
+                            color: isCurrent ? "#fff" : "var(--text-main)",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            fontSize: "0.85rem"
+                          }}
+                        >
+                          {p}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <button 
+                      type="button"
+                      disabled={validGridPage >= totalGridPages}
+                      onClick={() => setGridPage(prev => Math.min(totalGridPages, prev + 1))}
+                      className="btn btn-secondary"
+                      style={{ padding: "6px 14px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
+                    >
+                      Next 20 Photos <ChevronRight size={16} />
+                    </button>
+                    <button 
+                      type="button"
+                      disabled={validGridPage >= totalGridPages}
+                      onClick={() => setGridPage(totalGridPages)}
+                      className="btn btn-secondary"
+                      style={{ padding: "6px 10px", fontSize: "0.8rem" }}
+                      title="Last Page"
+                    >
+                      <ChevronsRight size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1000,9 +1215,9 @@ export default function Workspace() {
               </div>
 
               <div style={{ padding: "16px", background: "rgba(0,0,0,0.25)", borderRadius: "8px", marginTop: "24px" }}>
-                <h4 style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "8px" }}>Batch Info</h4>
+                <h4 style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "8px" }}>Batch Summary</h4>
                 <p style={{ fontSize: "0.85rem", marginBottom: "4px" }}>
-                  • Total Queue: <strong>{jobs.length}</strong> photos
+                  • Total Photos: <strong>{jobs.length}</strong> (in {totalSingleBatches} batches)
                 </p>
                 <p style={{ fontSize: "0.85rem", marginBottom: "4px" }}>
                   • Active Template: <strong>{selectedTemplate.name}</strong>
