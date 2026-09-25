@@ -6,8 +6,13 @@ import Sidebar from "./components/Sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Bulk Footer Generator - Auto-Fit Image Overlay",
-  description: "Generate and overlay footers onto photos in bulk with automatic scaling",
+  title: "FOOTRA - Create Once. Apply Everywhere.",
+  description: "Bulk Auto-Fit Footer Overlay Generator for tournament, event, club, and sponsor photos.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  }
 };
 
 export default function RootLayout({
@@ -17,6 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+      </head>
       <body className={`${inter.className} app-container`}>
         <Sidebar />
         <main className="main-content">

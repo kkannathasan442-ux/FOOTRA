@@ -23,8 +23,8 @@ export default function Dashboard() {
     <div style={{ maxWidth: "1100px", margin: "0 auto", paddingBottom: "60px" }}>
       {/* Hero Action Banner */}
       <div style={{ 
-        background: "linear-gradient(135deg, rgba(30, 58, 138, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%)",
-        border: "1px solid rgba(59, 130, 246, 0.3)",
+        background: "linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%)",
+        border: "1px solid rgba(59, 130, 246, 0.25)",
         borderRadius: "16px",
         padding: "36px 32px",
         marginBottom: "36px",
@@ -36,12 +36,17 @@ export default function Dashboard() {
         boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
       }}>
         <div style={{ maxWidth: "600px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(59, 130, 246, 0.2)", padding: "4px 10px", borderRadius: "20px", color: "#93c5fd", fontSize: "0.8rem", fontWeight: 600, marginBottom: "12px" }}>
-            <Zap size={14} /> Auto-Fit Proportional Banner Engine
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px" }}>
+            <img src="/icon.svg" alt="FOOTRA" style={{ width: "54px", height: "54px", borderRadius: "14px" }} />
+            <div>
+              <h1 style={{ fontSize: "2.2rem", fontWeight: 900, letterSpacing: "0.06em", lineHeight: 1 }}>
+                FOOTRA
+              </h1>
+              <p style={{ color: "#93c5fd", fontSize: "0.95rem", fontWeight: 500, marginTop: "4px" }}>
+                Create Once. Apply Everywhere.
+              </p>
+            </div>
           </div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: "12px", lineHeight: 1.2 }}>
-            Bulk Auto-Fit Footer Overlay
-          </h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.6 }}>
             Upload your tournament, event, or branding footer PNG once. Automatically scale and overlay it across any photo size, orientation, or resolution in seconds.
           </p>

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Image as ImageIcon, LayoutTemplate, FolderOpen, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, LayoutTemplate, FolderOpen, Settings, Sparkles } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -16,24 +16,36 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <div style={{
-          width: "34px",
-          height: "34px",
-          borderRadius: "8px",
-          background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#fff"
-        }}>
-          <Sparkles size={18} />
+      {/* Brand Header */}
+      <Link href="/" className="sidebar-header" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none" }}>
+        <img 
+          src="/icon.svg" 
+          alt="FOOTRA Logo" 
+          style={{ width: "38px", height: "38px", borderRadius: "10px", flexShrink: 0 }} 
+        />
+        <div style={{ overflow: "hidden" }}>
+          <h2 style={{ 
+            fontSize: "1.25rem", 
+            fontWeight: 900, 
+            letterSpacing: "0.08em", 
+            color: "#ffffff",
+            lineHeight: 1.1,
+            textTransform: "uppercase"
+          }}>
+            FOOTRA
+          </h2>
+          <span style={{ 
+            fontSize: "0.68rem", 
+            color: "var(--text-muted)", 
+            display: "block",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis"
+          }}>
+            Create Once. Apply Everywhere.
+          </span>
         </div>
-        <div>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Bulk Footer</h2>
-          <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", display: "block" }}>Auto-Fit Pro Overlay</span>
-        </div>
-      </div>
+      </Link>
 
       <nav className="sidebar-nav">
         {links.map((link) => {
@@ -65,8 +77,8 @@ export default function Sidebar() {
           fontSize: "0.75rem", 
           color: "var(--text-muted)" 
         }}>
-          <span style={{ color: "var(--success)", fontWeight: 600 }}>● Engine: Active</span>
-          <p style={{ marginTop: "4px" }}>HTML5 Canvas High-Res</p>
+          <span style={{ color: "var(--success)", fontWeight: 600 }}>● FOOTRA Engine v1.0</span>
+          <p style={{ marginTop: "4px" }}>Auto-Fit Proportional Scale</p>
         </div>
       </div>
     </aside>
