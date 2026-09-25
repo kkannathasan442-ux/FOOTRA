@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { 
   UploadCloud, 
   Settings, 
@@ -26,6 +26,139 @@ import { BatchProcessor } from "@/lib/queue";
 import { downloadZip } from "@/lib/zip";
 import Link from "next/link";
 
+// Memoized Thumbnail for filmstrip to prevent parent re-render loops
+const FilmstripThumbnail = memo(function FilmstripThumbnail({
+  file,
+  index,
+  isSelected,
+  footerUrl,
+  onClick
+}: {
+  file?: File;
+  index: number;
+  isSelected: boolean;
+  footerUrl: string;
+  onClick: () => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) return;
+    const objUrl = URL.createObjectURL(file);
+    setUrl(objUrl);
+    return () => URL.revokeObjectURL(objUrl);
+  }, [file]);
+
+  return (
+    <div 
+      onClick={onClick}
+      style={{ 
+        position: "relative",
+        width: "70px", 
+        height: "65px", 
+        borderRadius: "6px", 
+        overflow: "hidden", 
+        cursor: "pointer", 
+        flexShrink: 0,
+        border: `2px solid ${isSelected ? "var(--accent)" : "transparent"}`,
+        background: "#080c14",
+        boxShadow: isSelected ? "0 0 10px rgba(59, 130, 246, 0.6)" : "none",
+        opacity: isSelected ? 1 : 0.6,
+        transition: "all 0.15s ease"
+      }}
+      title={`Photo ${index + 1}`}
+    >
+      {url && <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+      {/* Mini footer preview overlay */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "14px", background: "rgba(11, 21, 40, 0.9)" }}>
+        <img src={footerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      </div>
+      <span style={{ position: "absolute", top: "2px", left: "4px", fontSize: "0.65rem", fontWeight: 700, color: "#fff", textShadow: "0 1px 2px #000" }}>
+        {index + 1}
+      </span>
+    </div>
+  );
+});
+
+// Memoized Grid Photo Card
+const GridPhotoCard = memo(function GridPhotoCard({
+  job,
+  index,
+  footerUrl,
+  onClick
+}: {
+  job: ImageJob;
+  index: number;
+  footerUrl: string;
+  onClick: () => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!job.originalFile) return;
+    const objUrl = URL.createObjectURL(job.originalFile);
+    setUrl(objUrl);
+    return () => URL.revokeObjectURL(objUrl);
+  }, [job.originalFile]);
+
+  return (
+    <div 
+      onClick={onClick}
+      style={{ 
+        position: "relative", 
+        background: "#080c14", 
+        borderRadius: "8px", 
+        overflow: "hidden", 
+        border: "1px solid var(--border)",
+        cursor: "pointer",
+        transition: "transform 0.15s, border-color 0.15s",
+        boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "scale(1.03)";
+        e.currentTarget.style.borderColor = "var(--accent)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.borderColor = "var(--border)";
+      }}
+    >
+      <div style={{ height: "140px", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {url ? (
+          <img src={url} alt={job.originalName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Loading...</span>
+        )}
+
+        {/* Live Overlay Footer on Grid Card */}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, width: "100%" }}>
+          <img src={footerUrl} alt="" style={{ width: "100%", display: "block" }} />
+        </div>
+
+        <span style={{ 
+          position: "absolute", 
+          top: "6px", 
+          left: "6px", 
+          background: "rgba(0,0,0,0.75)", 
+          color: "#fff", 
+          fontSize: "0.7rem", 
+          fontWeight: 700, 
+          padding: "2px 6px", 
+          borderRadius: "4px" 
+        }}>
+          #{index + 1}
+        </span>
+      </div>
+
+      <div style={{ padding: "8px 10px", background: "rgba(17, 24, 39, 0.95)" }}>
+        <p style={{ fontSize: "0.78rem", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {job.originalName}
+        </p>
+      </div>
+    </div>
+  );
+});
+
 export default function Workspace() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [templates, setTemplates] = useState<FooterTemplate[]>([]);
@@ -39,7 +172,6 @@ export default function Workspace() {
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [gridSearch, setGridSearch] = useState("");
-  const [thumbnailUrls, setThumbnailUrls] = useState<{ [id: string]: string }>({});
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [customFooterUrl, setCustomFooterUrl] = useState<string | null>(null);
@@ -49,6 +181,9 @@ export default function Workspace() {
     quality: 0.95,
     filenameSuffix: "_footer"
   });
+
+  const jobsCountRef = useRef(jobs.length);
+  jobsCountRef.current = jobs.length;
 
   const filmstripRef = useRef<HTMLDivElement>(null);
 
@@ -60,21 +195,6 @@ export default function Workspace() {
       }
     });
   }, []);
-
-  // Generate thumbnail object URLs for fast previews
-  useEffect(() => {
-    const urls: { [id: string]: string } = {};
-    jobs.forEach(job => {
-      if (job.originalFile) {
-        urls[job.id] = URL.createObjectURL(job.originalFile);
-      }
-    });
-    setThumbnailUrls(urls);
-
-    return () => {
-      Object.values(urls).forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [jobs]);
 
   const handleFiles = (files: FileList | File[]) => {
     const list = Array.from(files);
@@ -95,8 +215,7 @@ export default function Workspace() {
       alert("No valid images selected. Please select PNG, JPG, or WEBP files.");
       return;
     }
-    const combined = [...jobs, ...newJobs];
-    setJobs(combined);
+    setJobs(prev => [...prev, ...newJobs]);
     setCurrentPreviewIndex(0);
     setStep(2);
   };
@@ -133,7 +252,7 @@ export default function Workspace() {
     reader.readAsDataURL(file);
   };
 
-  // Update current active single photo preview
+  // Update current active single photo preview safely
   useEffect(() => {
     const activeJob = jobs[currentPreviewIndex];
     if (activeJob?.originalFile) {
@@ -147,14 +266,18 @@ export default function Workspace() {
     }
   }, [currentPreviewIndex, jobs]);
 
-  // Next & Previous Navigation handlers
+  // Safe Next & Previous Navigation handlers
   const handlePrev = useCallback(() => {
-    setCurrentPreviewIndex(prev => (prev > 0 ? prev - 1 : jobs.length - 1));
-  }, [jobs.length]);
+    const count = jobsCountRef.current;
+    if (count === 0) return;
+    setCurrentPreviewIndex(prev => (prev > 0 ? prev - 1 : count - 1));
+  }, []);
 
   const handleNext = useCallback(() => {
-    setCurrentPreviewIndex(prev => (prev < jobs.length - 1 ? prev + 1 : 0));
-  }, [jobs.length]);
+    const count = jobsCountRef.current;
+    if (count === 0) return;
+    setCurrentPreviewIndex(prev => (prev < count - 1 ? prev + 1 : 0));
+  }, []);
 
   // Keyboard navigation (Left Arrow ← and Right Arrow →)
   useEffect(() => {
@@ -177,14 +300,14 @@ export default function Workspace() {
 
   // Auto-play slideshow effect
   useEffect(() => {
-    if (!isPlaying || step !== 3 || previewMode !== "single" || jobs.length <= 1) return;
+    if (!isPlaying || step !== 3 || previewMode !== "single") return;
 
     const interval = setInterval(() => {
-      setCurrentPreviewIndex(prev => (prev < jobs.length - 1 ? prev + 1 : 0));
+      handleNext();
     }, 1200);
 
     return () => clearInterval(interval);
-  }, [isPlaying, step, previewMode, jobs.length]);
+  }, [isPlaying, step, previewMode, handleNext]);
 
   // Scroll active thumbnail into view in filmstrip
   useEffect(() => {
@@ -769,40 +892,16 @@ export default function Workspace() {
                     maxHeight: "95px"
                   }}
                 >
-                  {jobs.map((job, idx) => {
-                    const isSelected = idx === currentPreviewIndex;
-                    const url = thumbnailUrls[job.id];
-                    return (
-                      <div 
-                        key={job.id}
-                        onClick={() => setCurrentPreviewIndex(idx)}
-                        style={{ 
-                          position: "relative",
-                          width: "70px", 
-                          height: "65px", 
-                          borderRadius: "6px", 
-                          overflow: "hidden", 
-                          cursor: "pointer", 
-                          flexShrink: 0,
-                          border: `2px solid ${isSelected ? "var(--accent)" : "transparent"}`,
-                          background: "#080c14",
-                          boxShadow: isSelected ? "0 0 10px rgba(59, 130, 246, 0.6)" : "none",
-                          opacity: isSelected ? 1 : 0.6,
-                          transition: "all 0.15s ease"
-                        }}
-                        title={`Photo ${idx + 1}: ${job.originalName}`}
-                      >
-                        {url && <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-                        {/* Mini footer overlay */}
-                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "14px", background: "rgba(11, 21, 40, 0.9)" }}>
-                          <img src={selectedTemplate.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        </div>
-                        <span style={{ position: "absolute", top: "2px", left: "4px", fontSize: "0.65rem", fontWeight: 700, color: "#fff", textShadow: "0 1px 2px #000" }}>
-                          {idx + 1}
-                        </span>
-                      </div>
-                    );
-                  })}
+                  {jobs.map((job, idx) => (
+                    <FilmstripThumbnail
+                      key={job.id}
+                      file={job.originalFile}
+                      index={idx}
+                      isSelected={idx === currentPreviewIndex}
+                      footerUrl={selectedTemplate.imageUrl}
+                      onClick={() => setCurrentPreviewIndex(idx)}
+                    />
+                  ))}
                 </div>
               </>
             )}
@@ -824,66 +923,17 @@ export default function Workspace() {
                 }}>
                   {filteredJobs.map((job) => {
                     const actualIdx = jobs.findIndex(j => j.id === job.id);
-                    const url = thumbnailUrls[job.id];
                     return (
-                      <div 
+                      <GridPhotoCard
                         key={job.id}
+                        job={job}
+                        index={actualIdx}
+                        footerUrl={selectedTemplate.imageUrl}
                         onClick={() => {
                           setCurrentPreviewIndex(actualIdx);
                           setPreviewMode("single");
                         }}
-                        style={{ 
-                          position: "relative", 
-                          background: "#080c14", 
-                          borderRadius: "8px", 
-                          overflow: "hidden", 
-                          border: "1px solid var(--border)",
-                          cursor: "pointer",
-                          transition: "transform 0.15s, border-color 0.15s",
-                          boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "scale(1.03)";
-                          e.currentTarget.style.borderColor = "var(--accent)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "scale(1)";
-                          e.currentTarget.style.borderColor = "var(--border)";
-                        }}
-                      >
-                        <div style={{ height: "140px", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          {url ? (
-                            <img src={url} alt={job.originalName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          ) : (
-                            <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Loading...</span>
-                          )}
-
-                          {/* Live Overlay Footer on Grid Card */}
-                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, width: "100%" }}>
-                            <img src={selectedTemplate.imageUrl} alt="" style={{ width: "100%", display: "block" }} />
-                          </div>
-
-                          <span style={{ 
-                            position: "absolute", 
-                            top: "6px", 
-                            left: "6px", 
-                            background: "rgba(0,0,0,0.75)", 
-                            color: "#fff", 
-                            fontSize: "0.7rem", 
-                            fontWeight: 700, 
-                            padding: "2px 6px", 
-                            borderRadius: "4px" 
-                          }}>
-                            #{actualIdx + 1}
-                          </span>
-                        </div>
-
-                        <div style={{ padding: "8px 10px", background: "rgba(17, 24, 39, 0.95)" }}>
-                          <p style={{ fontSize: "0.78rem", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {job.originalName}
-                          </p>
-                        </div>
-                      </div>
+                      />
                     );
                   })}
                 </div>
