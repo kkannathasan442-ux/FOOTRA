@@ -95,8 +95,12 @@ a {
 .main-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+  max-width: 100%;
   padding: 32px 40px;
   background: radial-gradient(circle at 50% 0%, rgba(30, 58, 138, 0.15) 0%, rgba(9, 13, 22, 1) 70%);
+  box-sizing: border-box;
 }
 
 .card {

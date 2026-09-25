@@ -58,8 +58,8 @@ const FilmstripThumbnail = memo(function FilmstripThumbnail({
       onClick={onClick}
       style={{ 
         position: "relative",
-        width: "74px", 
-        height: "68px", 
+        width: "72px", 
+        height: "66px", 
         borderRadius: "8px", 
         overflow: "hidden", 
         cursor: "pointer", 
@@ -68,7 +68,7 @@ const FilmstripThumbnail = memo(function FilmstripThumbnail({
         background: "#080c14",
         boxShadow: isSelected ? "0 0 12px rgba(59, 130, 246, 0.7)" : "none",
         opacity: isSelected ? 1 : 0.65,
-        transform: isSelected ? "scale(1.05)" : "scale(1)",
+        transform: isSelected ? "scale(1.04)" : "scale(1)",
         transition: "all 0.15s ease"
       }}
       title={`Photo #${index + 1}`}
@@ -85,7 +85,7 @@ const FilmstripThumbnail = memo(function FilmstripThumbnail({
         fontSize: "0.65rem", 
         fontWeight: 700, 
         color: "#fff", 
-        background: "rgba(0,0,0,0.7)",
+        background: "rgba(0,0,0,0.75)",
         padding: "1px 4px",
         borderRadius: "3px"
       }}>
@@ -148,7 +148,7 @@ const GridPhotoCard = memo(function GridPhotoCard({
         )}
 
         {/* Live Overlay Footer on Grid Card */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, width: "100%" }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, width: "100%", lineHeight: 0 }}>
           <img src={footerUrl} alt="" style={{ width: "100%", display: "block" }} />
         </div>
 
@@ -437,7 +437,7 @@ export default function Workspace() {
   const currentJob = jobs[currentPreviewIndex];
 
   return (
-    <div style={{ maxWidth: "1300px", margin: "0 auto", paddingBottom: "60px" }}>
+    <div style={{ width: "100%", maxWidth: "100%", margin: "0 auto", paddingBottom: "60px", boxSizing: "border-box" }}>
       {/* Header & Steps Nav */}
       <div className="header-flex" style={{ flexWrap: "wrap", gap: "16px" }}>
         <div>
@@ -691,14 +691,21 @@ export default function Workspace() {
 
       {/* STEP 3: 20-Photo Paginated Interactive Preview & Settings */}
       {step === 3 && selectedTemplate && (
-        <div style={{ display: "grid", gridTemplateColumns: previewMode === "single" ? "1.4fr 0.6fr" : "1fr", gap: "24px", marginTop: "20px" }}>
+        <div style={{ 
+          display: "grid", 
+          gridTemplateColumns: previewMode === "single" ? "minmax(0, 1fr) 300px" : "minmax(0, 1fr)", 
+          gap: "20px", 
+          marginTop: "20px",
+          width: "100%",
+          boxSizing: "border-box"
+        }}>
           
           {/* Main Interactive Preview Card */}
-          <div className="card" style={{ display: "flex", flexDirection: "column" }}>
+          <div className="card" style={{ display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden", width: "100%", boxSizing: "border-box" }}>
             
             {/* Top Toolbar: View Switcher, Rapid Slider, Counter & Auto-Play */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "16px", width: "100%" }}>
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
                 <div style={{ display: "flex", background: "rgba(0,0,0,0.35)", padding: "4px", borderRadius: "10px", border: "1px solid var(--border)" }}>
                   <button 
                     type="button"
@@ -745,15 +752,15 @@ export default function Workspace() {
                 </div>
 
                 {previewMode === "single" && (
-                  <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: "6px" }}>
-                    Flip: <strong>←</strong> / <strong>→</strong> | Jump 20: <strong>Shift+←/→</strong>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "6px" }}>
+                    Flip: <strong>←/→</strong> | Jump 20: <strong>Shift+←/→</strong>
                   </span>
                 )}
               </div>
 
               {/* Single View Navigation Toolbar */}
               {previewMode === "single" ? (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
                   <button 
                     type="button"
                     onClick={() => setIsPlaying(!isPlaying)}
@@ -766,18 +773,18 @@ export default function Workspace() {
                   </button>
 
                   {/* Single Photo Step Controls */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px", background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "2px", background: "rgba(0,0,0,0.3)", padding: "2px 4px", borderRadius: "8px", border: "1px solid var(--border)" }}>
                     <button 
                       type="button"
                       onClick={handlePrev}
                       className="btn btn-secondary"
-                      style={{ padding: "6px 10px", border: "none" }}
+                      style={{ padding: "6px 8px", border: "none" }}
                       title="Previous Photo (← Left Arrow)"
                     >
-                      <ChevronLeft size={18} />
+                      <ChevronLeft size={16} />
                     </button>
                     
-                    <span style={{ fontSize: "0.85rem", fontWeight: 700, minWidth: "90px", textAlign: "center" }}>
+                    <span style={{ fontSize: "0.8rem", fontWeight: 700, minWidth: "80px", textAlign: "center" }}>
                       #{currentPreviewIndex + 1} / {jobs.length}
                     </span>
 
@@ -785,15 +792,15 @@ export default function Workspace() {
                       type="button"
                       onClick={handleNext}
                       className="btn btn-secondary"
-                      style={{ padding: "6px 10px", border: "none" }}
+                      style={{ padding: "6px 8px", border: "none" }}
                       title="Next Photo (→ Right Arrow)"
                     >
-                      <ChevronRight size={18} />
+                      <ChevronRight size={16} />
                     </button>
                   </div>
                 </div>
               ) : (
-                <div style={{ position: "relative", minWidth: "220px" }}>
+                <div style={{ position: "relative", minWidth: "200px" }}>
                   <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
                   <input 
                     type="text" 
@@ -801,7 +808,7 @@ export default function Workspace() {
                     value={gridSearch}
                     onChange={(e) => { setGridSearch(e.target.value); setGridPage(1); }}
                     className="form-control"
-                    style={{ paddingLeft: "32px", fontSize: "0.8rem", padding: "6px 10px 6px 30px" }}
+                    style={{ paddingLeft: "30px", fontSize: "0.8rem", padding: "6px 10px 6px 30px" }}
                   />
                 </div>
               )}
@@ -818,9 +825,14 @@ export default function Workspace() {
                   padding: "16px", 
                   display: "flex", 
                   alignItems: "center", 
-                  justifyContent: "center",
-                  minHeight: "440px",
-                  userSelect: "none"
+                  justifyContent: "center", 
+                  minHeight: "420px",
+                  maxHeight: "490px",
+                  width: "100%",
+                  maxWidth: "100%",
+                  boxSizing: "border-box",
+                  userSelect: "none",
+                  overflow: "hidden"
                 }}>
                   {/* Left Quick Arrow Overlay */}
                   <button 
@@ -832,17 +844,17 @@ export default function Workspace() {
                       top: "50%", 
                       transform: "translateY(-50%)", 
                       zIndex: 20, 
-                      background: "rgba(15, 23, 42, 0.85)", 
+                      background: "rgba(15, 23, 42, 0.92)", 
                       border: "1px solid var(--border)", 
                       color: "#ffffff", 
-                      width: "42px", 
-                      height: "42px", 
+                      width: "44px", 
+                      height: "44px", 
                       borderRadius: "50%", 
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
                       cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
                       transition: "all 0.15s ease"
                     }}
                     title="Previous Photo (← Left Arrow)"
@@ -855,16 +867,19 @@ export default function Workspace() {
                     <div style={{ 
                       position: "relative", 
                       maxWidth: "100%", 
-                      maxHeight: "460px", 
+                      maxHeight: "450px", 
                       boxShadow: "0 14px 40px rgba(0,0,0,0.7)",
                       borderRadius: "8px",
                       overflow: "hidden",
-                      display: "inline-block"
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      lineHeight: 0
                     }}>
                       <img 
                         src={previewDataUrl} 
                         alt={currentJob?.originalName || "Photo"} 
-                        style={{ maxWidth: "100%", maxHeight: "460px", display: "block" }} 
+                        style={{ maxWidth: "100%", maxHeight: "450px", width: "auto", height: "auto", display: "block" }} 
                       />
                       {/* Superimposed Footer Strip (100% Width Auto-Fit) */}
                       <div style={{ 
@@ -873,6 +888,7 @@ export default function Workspace() {
                         right: 0, 
                         bottom: 0, 
                         width: "100%",
+                        lineHeight: 0,
                         pointerEvents: "none"
                       }}>
                         <img 
@@ -896,17 +912,17 @@ export default function Workspace() {
                       top: "50%", 
                       transform: "translateY(-50%)", 
                       zIndex: 20, 
-                      background: "rgba(15, 23, 42, 0.85)", 
+                      background: "rgba(15, 23, 42, 0.92)", 
                       border: "1px solid var(--border)", 
                       color: "#ffffff", 
-                      width: "42px", 
-                      height: "42px", 
+                      width: "44px", 
+                      height: "44px", 
                       borderRadius: "50%", 
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
                       cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
                       transition: "all 0.15s ease"
                     }}
                     title="Next Photo (→ Right Arrow)"
@@ -916,17 +932,17 @@ export default function Workspace() {
                 </div>
 
                 {/* Current Photo Details & Fast Scrub Slider */}
-                <div style={{ marginTop: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+                <div style={{ marginTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", width: "100%", boxSizing: "border-box" }}>
                   <div>
-                    <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--accent)" }}>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--accent)" }}>
                       Photo #{currentPreviewIndex + 1}
                     </span>
-                    <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginLeft: "6px" }}>
+                    <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginLeft: "6px" }}>
                       ({currentJob?.originalName})
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", maxWidth: "320px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", maxWidth: "280px" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>#1</span>
                     <input 
                       type="range" 
@@ -941,13 +957,13 @@ export default function Workspace() {
                 </div>
 
                 {/* 20-Photos Filmstrip Header with 20-Photo Jump Controls */}
-                <div style={{ marginTop: "18px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(0,0,0,0.25)", padding: "8px 12px", borderRadius: "8px 8px 0 0", border: "1px solid var(--border)", borderBottom: "none" }}>
+                <div style={{ marginTop: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(0,0,0,0.25)", padding: "6px 12px", borderRadius: "8px 8px 0 0", border: "1px solid var(--border)", borderBottom: "none", width: "100%", boxSizing: "border-box" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                      Current 20-Photo Batch (Batch {singleBatchPage} of {totalSingleBatches}):
+                    <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>
+                      20-Photo Batch ({singleBatchPage}/{totalSingleBatches}):
                     </span>
-                    <span style={{ fontSize: "0.8rem", color: "#93c5fd", background: "rgba(59, 130, 246, 0.15)", padding: "2px 8px", borderRadius: "4px" }}>
-                      Photos #{singleBatchStart + 1} to #{singleBatchEnd}
+                    <span style={{ fontSize: "0.75rem", color: "#93c5fd", background: "rgba(59, 130, 246, 0.15)", padding: "2px 6px", borderRadius: "4px" }}>
+                      #{singleBatchStart + 1} to #{singleBatchEnd}
                     </span>
                   </div>
 
@@ -957,19 +973,19 @@ export default function Workspace() {
                         type="button"
                         onClick={handlePrevBatch}
                         className="btn btn-secondary"
-                        style={{ padding: "4px 10px", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "4px" }}
+                        style={{ padding: "3px 8px", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "2px" }}
                         title="Previous 20 Photos (Shift + ←)"
                       >
-                        <ChevronsLeft size={14} /> Prev 20
+                        <ChevronsLeft size={13} /> Prev 20
                       </button>
                       <button 
                         type="button"
                         onClick={handleNextBatch}
                         className="btn btn-secondary"
-                        style={{ padding: "4px 10px", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "4px" }}
+                        style={{ padding: "3px 8px", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "2px" }}
                         title="Next 20 Photos (Shift + →)"
                       >
-                        Next 20 <ChevronsRight size={14} />
+                        Next 20 <ChevronsRight size={13} />
                       </button>
                     </div>
                   )}
@@ -982,11 +998,16 @@ export default function Workspace() {
                     display: "flex", 
                     gap: "8px", 
                     overflowX: "auto", 
+                    overflowY: "hidden",
                     padding: "10px", 
                     background: "rgba(0,0,0,0.35)", 
                     borderRadius: "0 0 10px 10px", 
                     border: "1px solid var(--border)",
-                    maxHeight: "95px"
+                    maxHeight: "95px",
+                    width: "100%",
+                    maxWidth: "100%",
+                    boxSizing: "border-box",
+                    whiteSpace: "nowrap"
                   }}
                 >
                   {current20FilmstripJobs.map((job, idx) => {
@@ -1008,7 +1029,7 @@ export default function Workspace() {
 
             {/* ALL PHOTOS (20 PER PAGE GRID VIEW) MODE */}
             {previewMode === "grid" && (
-              <div style={{ marginTop: "8px" }}>
+              <div style={{ marginTop: "8px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
                     Showing <strong>{gridStartIndex + 1} - {gridEndIndex}</strong> of <strong>{filteredJobs.length}</strong> photos (Page {validGridPage} of {totalGridPages}). Click any photo to flip in Single View.
@@ -1045,9 +1066,10 @@ export default function Workspace() {
                 {/* 20-Photo Responsive Grid */}
                 <div style={{ 
                   display: "grid", 
-                  gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", 
-                  gap: "16px", 
-                  minHeight: "420px"
+                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", 
+                  gap: "14px", 
+                  minHeight: "420px",
+                  width: "100%"
                 }}>
                   {current20GridJobs.map((job) => {
                     const actualIdx = jobs.findIndex(j => j.id === job.id);
@@ -1068,8 +1090,8 @@ export default function Workspace() {
 
                 {/* Bottom Full Pagination Bar */}
                 <div style={{ 
-                  marginTop: "24px", 
-                  padding: "16px", 
+                  marginTop: "20px", 
+                  padding: "14px", 
                   background: "rgba(0,0,0,0.25)", 
                   borderRadius: "10px", 
                   border: "1px solid var(--border)",
@@ -1077,9 +1099,11 @@ export default function Workspace() {
                   justifyContent: "space-between", 
                   alignItems: "center", 
                   flexWrap: "wrap", 
-                  gap: "12px" 
+                  gap: "10px",
+                  width: "100%",
+                  boxSizing: "border-box"
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <button 
                       type="button"
                       disabled={validGridPage <= 1}
@@ -1095,9 +1119,9 @@ export default function Workspace() {
                       disabled={validGridPage <= 1}
                       onClick={() => setGridPage(prev => Math.max(1, prev - 1))}
                       className="btn btn-secondary"
-                      style={{ padding: "6px 14px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
+                      style={{ padding: "6px 12px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "4px" }}
                     >
-                      <ChevronLeft size={16} /> Prev 20 Photos
+                      <ChevronLeft size={16} /> Prev 20
                     </button>
                   </div>
 
@@ -1113,15 +1137,15 @@ export default function Workspace() {
                           type="button"
                           onClick={() => setGridPage(p)}
                           style={{
-                            width: "34px",
-                            height: "34px",
+                            width: "32px",
+                            height: "32px",
                             borderRadius: "6px",
                             border: `1px solid ${isCurrent ? "var(--accent)" : "var(--border)"}`,
                             background: isCurrent ? "var(--accent)" : "rgba(0,0,0,0.2)",
                             color: isCurrent ? "#fff" : "var(--text-main)",
                             fontWeight: 600,
                             cursor: "pointer",
-                            fontSize: "0.85rem"
+                            fontSize: "0.8rem"
                           }}
                         >
                           {p}
@@ -1130,15 +1154,15 @@ export default function Workspace() {
                     })}
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <button 
                       type="button"
                       disabled={validGridPage >= totalGridPages}
                       onClick={() => setGridPage(prev => Math.min(totalGridPages, prev + 1))}
                       className="btn btn-secondary"
-                      style={{ padding: "6px 14px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
+                      style={{ padding: "6px 12px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "4px" }}
                     >
-                      Next 20 Photos <ChevronRight size={16} />
+                      Next 20 <ChevronRight size={16} />
                     </button>
                     <button 
                       type="button"
@@ -1156,11 +1180,22 @@ export default function Workspace() {
             )}
 
             {/* Bottom Actions */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "24px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center", 
+              flexWrap: "wrap",
+              gap: "12px",
+              marginTop: "20px", 
+              paddingTop: "14px", 
+              borderTop: "1px solid var(--border)", 
+              width: "100%",
+              boxSizing: "border-box"
+            }}>
               <button className="btn btn-secondary" onClick={() => setStep(2)}>
                 Back to Templates
               </button>
-              <button className="btn" onClick={startProcessing} style={{ padding: "12px 28px", fontSize: "1rem" }}>
+              <button className="btn" onClick={startProcessing} style={{ padding: "10px 24px", fontSize: "0.95rem" }}>
                 <Play size={18} /> Start Batch Processing ({jobs.length} Photos)
               </button>
             </div>
@@ -1169,12 +1204,21 @@ export default function Workspace() {
 
           {/* Export Settings Card (in Single View) */}
           {previewMode === "single" && (
-            <div className="card">
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <div className="card" style={{ 
+              minWidth: 0, 
+              width: "100%", 
+              maxWidth: "100%",
+              height: "fit-content", 
+              boxSizing: "border-box",
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px"
+            }}>
+              <h3 style={{ fontSize: "1.1rem", marginBottom: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
                 <Settings size={18} color="var(--accent)" /> Output Settings
               </h3>
 
-              <div className="form-group">
+              <div className="form-group" style={{ marginBottom: "0" }}>
                 <label>Output Format</label>
                 <select 
                   className="form-control" 
@@ -1187,7 +1231,7 @@ export default function Workspace() {
                 </select>
               </div>
 
-              <div className="form-group">
+              <div className="form-group" style={{ marginBottom: "0" }}>
                 <label style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>Quality Compression</span>
                   <span style={{ color: "var(--accent)" }}>{Math.round(settings.quality * 100)}%</span>
@@ -1203,7 +1247,7 @@ export default function Workspace() {
                 />
               </div>
 
-              <div className="form-group">
+              <div className="form-group" style={{ marginBottom: "0" }}>
                 <label>Filename Suffix</label>
                 <input 
                   type="text" 
@@ -1214,18 +1258,26 @@ export default function Workspace() {
                 />
               </div>
 
-              <div style={{ padding: "16px", background: "rgba(0,0,0,0.25)", borderRadius: "8px", marginTop: "24px" }}>
+              <div style={{ padding: "12px", background: "rgba(0,0,0,0.25)", borderRadius: "8px" }}>
                 <h4 style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "8px" }}>Batch Summary</h4>
-                <p style={{ fontSize: "0.85rem", marginBottom: "4px" }}>
-                  • Total Photos: <strong>{jobs.length}</strong> (in {totalSingleBatches} batches)
+                <p style={{ fontSize: "0.82rem", marginBottom: "4px" }}>
+                  • Total Photos: <strong>{jobs.length}</strong> ({totalSingleBatches} batches)
                 </p>
-                <p style={{ fontSize: "0.85rem", marginBottom: "4px" }}>
+                <p style={{ fontSize: "0.82rem", marginBottom: "4px" }}>
                   • Active Template: <strong>{selectedTemplate.name}</strong>
                 </p>
-                <p style={{ fontSize: "0.85rem", color: "var(--success)" }}>
-                  • Scale Mode: <strong>100% Proportional Auto-Fit</strong>
+                <p style={{ fontSize: "0.82rem", color: "var(--success)" }}>
+                  • Scale Mode: <strong>100% Auto-Fit</strong>
                 </p>
               </div>
+
+              <button 
+                className="btn" 
+                onClick={startProcessing} 
+                style={{ width: "100%", padding: "12px", fontSize: "0.95rem", marginTop: "4px" }}
+              >
+                <Play size={18} /> Start Process ({jobs.length})
+              </button>
             </div>
           )}
 
