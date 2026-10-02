@@ -1,111 +1,169 @@
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { supabase } from './supabase';
 import { FooterTemplate, Project, ImageJob } from './types';
 
-interface BulkFooterDB extends DBSchema {
-  templates: {
-    key: string;
-    value: FooterTemplate;
-  };
-  projects: {
-    key: string;
-    value: Project;
-  };
-  jobs: {
-    key: string;
-    value: ImageJob;
-    indexes: { 'by-project': string };
+// --- Mappers ---
+
+function mapTemplateFromDB(row: any): FooterTemplate {
+  return {
+    id: row.id,
+    name: row.name,
+    imageUrl: row.image_url,
+    width: row.width,
+    height: row.height,
+    aspectRatio: row.aspect_ratio,
+    defaultHeightMode: row.default_height_mode,
+    defaultHeightValue: row.default_height_value,
+    position: row.position,
+    opacity: row.opacity,
+    safeArea: row.safe_area,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
-let dbPromise: Promise<IDBPDatabase<BulkFooterDB>>;
-
-export function initDB() {
-  if (!dbPromise && typeof window !== 'undefined') {
-    dbPromise = openDB<BulkFooterDB>('bulk-footer-db', 1, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('templates')) {
-          db.createObjectStore('templates', { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains('projects')) {
-          db.createObjectStore('projects', { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains('jobs')) {
-          const jobStore = db.createObjectStore('jobs', { keyPath: 'id' });
-          jobStore.createIndex('by-project', 'projectId');
-        }
-      },
-    });
-  }
-  return dbPromise;
+function mapTemplateToDB(template: FooterTemplate): any {
+  return {
+    id: template.id,
+    name: template.name,
+    image_url: template.imageUrl,
+    width: template.width,
+    height: template.height,
+    aspect_ratio: template.aspectRatio,
+    default_height_mode: template.defaultHeightMode,
+    default_height_value: template.defaultHeightValue,
+    position: template.position,
+    opacity: template.opacity,
+    safe_area: template.safeArea,
+    created_at: template.createdAt,
+    updated_at: template.updatedAt,
+  };
 }
 
-// Templates
+function mapProjectFromDB(row: any): Project {
+  return {
+    id: row.id,
+    name: row.name,
+    templateId: row.template_id,
+    status: row.status,
+    imageCount: row.image_count,
+    completedCount: row.completed_count,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapProjectToDB(project: Project): any {
+  return {
+    id: project.id,
+    name: project.name,
+    template_id: project.templateId,
+    status: project.status,
+    image_count: project.imageCount,
+    completed_count: project.completedCount,
+    created_at: project.createdAt,
+    updated_at: project.updatedAt,
+  };
+}
+
+function mapJobFromDB(row: any): ImageJob {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    originalName: row.original_name,
+    width: row.width,
+    height: row.height,
+    fileSize: row.file_size,
+    status: row.status,
+    outputUrl: row.output_url,
+    error: row.error,
+    override: row.override,
+  };
+}
+
+function mapJobToDB(job: ImageJob): any {
+  return {
+    id: job.id,
+    project_id: job.projectId,
+    original_name: job.originalName,
+    width: job.width,
+    height: job.height,
+    file_size: job.fileSize,
+    status: job.status,
+    output_url: job.outputUrl,
+    error: job.error,
+    override: job.override,
+  };
+}
+
+// --- Templates ---
 export async function getTemplates(): Promise<FooterTemplate[]> {
-  const db = await initDB();
-  if (!db) return [];
-  return db.getAll('templates');
+  const { data, error } = await supabase.from('templates').select('*').order('created_at', { ascending: false });
+  if (error) {
+    console.error('Error fetching templates:', error);
+    return [];
+  }
+  return data ? data.map(mapTemplateFromDB) : [];
 }
 
 export async function getTemplate(id: string): Promise<FooterTemplate | undefined> {
-  const db = await initDB();
-  if (!db) return undefined;
-  return db.get('templates', id);
+  const { data, error } = await supabase.from('templates').select('*').eq('id', id).single();
+  if (error) {
+    console.error('Error fetching template:', error);
+    return undefined;
+  }
+  return data ? mapTemplateFromDB(data) : undefined;
 }
 
 export async function saveTemplate(template: FooterTemplate) {
-  const db = await initDB();
-  if (!db) return;
-  return db.put('templates', template);
+  const { error } = await supabase.from('templates').upsert(mapTemplateToDB(template));
+  if (error) console.error('Error saving template:', JSON.stringify(error, null, 2));
 }
 
 export async function deleteTemplate(id: string) {
-  const db = await initDB();
-  if (!db) return;
-  return db.delete('templates', id);
+  const { error } = await supabase.from('templates').delete().eq('id', id);
+  if (error) console.error('Error deleting template:', error);
 }
 
-// Projects
+// --- Projects ---
 export async function getProjects(): Promise<Project[]> {
-  const db = await initDB();
-  if (!db) return [];
-  return db.getAll('projects');
+  const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+  if (error) {
+    console.error('Error fetching projects:', error);
+    return [];
+  }
+  return data ? data.map(mapProjectFromDB) : [];
 }
 
 export async function getProject(id: string): Promise<Project | undefined> {
-  const db = await initDB();
-  if (!db) return undefined;
-  return db.get('projects', id);
+  const { data, error } = await supabase.from('projects').select('*').eq('id', id).single();
+  if (error) {
+    console.error('Error fetching project:', error);
+    return undefined;
+  }
+  return data ? mapProjectFromDB(data) : undefined;
 }
 
 export async function saveProject(project: Project) {
-  const db = await initDB();
-  if (!db) return;
-  return db.put('projects', project);
+  const { error } = await supabase.from('projects').upsert(mapProjectToDB(project));
+  if (error) console.error('Error saving project:', error);
 }
 
-// Jobs
+// --- Jobs ---
 export async function getJobsForProject(projectId: string): Promise<ImageJob[]> {
-  const db = await initDB();
-  if (!db) return [];
-  return db.getAllFromIndex('jobs', 'by-project', projectId);
+  const { data, error } = await supabase.from('jobs').select('*').eq('project_id', projectId);
+  if (error) {
+    console.error('Error fetching jobs:', error);
+    return [];
+  }
+  return data ? data.map(mapJobFromDB) : [];
 }
 
 export async function saveJob(job: ImageJob) {
-  const db = await initDB();
-  if (!db) return;
-  return db.put('jobs', job);
+  const { error } = await supabase.from('jobs').upsert(mapJobToDB(job));
+  if (error) console.error('Error saving job:', error);
 }
 
 export async function deleteJobsForProject(projectId: string) {
-  const db = await initDB();
-  if (!db) return;
-  const tx = db.transaction('jobs', 'readwrite');
-  const index = tx.store.index('by-project');
-  let cursor = await index.openCursor(IDBKeyRange.only(projectId));
-  
-  while (cursor) {
-    await cursor.delete();
-    cursor = await cursor.continue();
-  }
-  await tx.done;
+  const { error } = await supabase.from('jobs').delete().eq('project_id', projectId);
+  if (error) console.error('Error deleting jobs:', error);
 }

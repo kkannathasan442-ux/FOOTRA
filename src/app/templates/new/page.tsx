@@ -94,23 +94,48 @@ export default function NewTemplate() {
   const handleSave = async () => {
     if (!name.trim() || !imageUrl) return alert("Please enter a template name and upload a footer image.");
     
-    const template: FooterTemplate = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      imageUrl,
-      width: imgWidth || 1200,
-      height: imgHeight || 120,
-      aspectRatio: imgWidth && imgHeight ? imgWidth / imgHeight : 10,
-      defaultHeightMode: fitMode,
-      defaultHeightValue: fitValue,
-      position,
-      opacity: opacity / 100,
-      safeArea: { left: 0, right: 0 },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    await saveTemplate(template);
-    router.push("/templates");
+    setIsLoading(true);
+    try {
+      let finalImageUrl = imageUrl;
+      
+      // If the image is a base64 string (newly uploaded or generated), upload it to Cloudinary directly
+      if (imageUrl.startsWith('data:image')) {
+        const formData = new FormData();
+        formData.append('file', imageUrl);
+        formData.append('upload_preset', 'footra'); // The unsigned preset provided by user
+
+        const res = await fetch('https://api.cloudinary.com/v1_1/dctiqhzyc/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || 'Failed to upload image to Cloudinary');
+        finalImageUrl = data.secure_url;
+      }
+
+      const template: FooterTemplate = {
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        imageUrl: finalImageUrl,
+        width: imgWidth || 1200,
+        height: imgHeight || 120,
+        aspectRatio: imgWidth && imgHeight ? imgWidth / imgHeight : 10,
+        defaultHeightMode: fitMode,
+        defaultHeightValue: fitValue,
+        position,
+        opacity: opacity / 100,
+        safeArea: { left: 0, right: 0 },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      await saveTemplate(template);
+      router.push("/templates");
+    } catch (err: any) {
+      console.error(err);
+      alert("Error saving: " + err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const sampleDimensions = {
